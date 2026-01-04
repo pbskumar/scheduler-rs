@@ -1,13 +1,27 @@
-use crate::time::Tick;
+extern crate core;
+
+use crate::job::Job;
+use crate::job::TaskType::CPU;
+use crate::scheduler::Scheduler;
 
 mod time;
+mod scheduler;
+mod job;
 
 fn main() {
-    println!("Simulating time progress");
+    println!("Simulating Job scheduler");
 
-    let mut processing_time: Tick = 0;
-    while processing_time < 10 {
-        println!("Current time: {}", processing_time);
-        processing_time += 1
-    }
+    let job1: Job = Job::new(
+        1,
+        String::from("job1"),
+        vec![CPU(1), CPU(2), CPU(8), CPU(2), CPU(7)]
+    );
+    let job2: Job = Job::new(
+        2,
+        String::from("job2"),
+        vec![CPU(1), CPU(17), CPU(4), CPU(21), CPU(3)]
+    );
+
+    let mut scheduler = Scheduler::new(vec![job1, job2]);
+    scheduler.run();
 }
