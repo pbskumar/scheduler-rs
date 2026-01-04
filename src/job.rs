@@ -3,6 +3,7 @@ use crate::job::TaskType::{CPU, IO};
 use crate::time::Tick;
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum TaskType {
     CPU(Tick),
     IO(Tick)
@@ -90,4 +91,22 @@ impl Job {
         }
         Ran(tick_quota - remaining_quota)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create_test_job() {
+        let job: Job = Job::new(
+            1,
+            String::from("job"),
+            vec![CPU(1), CPU(2), IO(3), CPU(8), IO(1), CPU(2), CPU(7), IO(12)]
+        );
+
+        let expected_job_list = vec![CPU(3), IO(3), CPU(8), IO(1), CPU(9), IO(12)];
+        assert_eq!(expected_job_list, job.tasks)
+    }
+
 }
