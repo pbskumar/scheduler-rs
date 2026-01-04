@@ -1,11 +1,11 @@
 use crate::job::JobEvent::{Finished, Ran};
-use crate::job::TaskType::CPU;
+use crate::job::TaskType::{CPU, IO};
 use crate::time::Tick;
 
 #[derive(Debug)]
 pub enum TaskType {
     CPU(Tick),
-    // IO(Tick) - Implementing only CPU tasks for now
+    IO(Tick)
 }
 
 pub enum JobEvent {
@@ -23,7 +23,28 @@ pub struct Job {
 
 impl Job {
     pub fn new(id: usize, name: String, tasks: Vec<TaskType>) -> Job {
-        Job {id, name, tasks}
+        println!("Processing request to create new Job {} with {:?} tasks", name, tasks);
+        let collapsed_jobs = Job::collapse_tasks(tasks);
+        println!("Optimized and creating Job {} with {:?} tasks", id, collapsed_jobs);
+
+        Job {id, name, tasks: collapsed_jobs }
+    }
+
+    fn collapse_tasks(tasks: Vec<TaskType>) -> Vec<TaskType> {
+        tasks.into_iter().fold(Vec::new(), |mut acc, item| {
+            match (acc.last_mut(), item) {
+                (Some(TaskType::CPU(sum)), TaskType::CPU(x)) => {
+                    *sum += x;
+                }
+                (Some(TaskType::IO(sum)), TaskType::IO(x)) => {
+                    *sum += x;
+                }
+                (_, item) => {
+                    acc.push(item)
+                }
+            }
+            acc
+        })
     }
 
     pub fn step(&mut self, tick_quota: Tick) -> JobEvent {
@@ -41,6 +62,8 @@ impl Job {
             let cycles ;
             match next_task {
                 CPU(tick) => {
+                    // Leaving duplicate code for now as this might move to Policy
+                    // Keeping things fluid for now...
                     if *tick > remaining_quota {
                         self.tasks[0] = CPU(*tick - remaining_quota);
                         cycles = remaining_quota;
@@ -49,8 +72,19 @@ impl Job {
                         self.tasks.remove(0);
                     }
 
-                    println!("Processed {} for {} ticks", self.name, cycles);
+                    println!("Processed CPU cycle of {} for {} ticks", self.name, cycles);
                 },
+                IO(tick) => {
+                    if *tick > remaining_quota {
+                        self.tasks[0] = IO(*tick - remaining_quota);
+                        cycles = remaining_quota;
+                    } else {
+                        cycles = *tick;
+                        self.tasks.remove(0);
+                    }
+
+                    println!("Blocked IO cycle of {} for {} ticks", self.name, cycles);
+                }
             }
             remaining_quota -= cycles;
         }

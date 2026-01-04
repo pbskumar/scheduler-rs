@@ -20,6 +20,7 @@ impl Scheduler {
         let mut current_tick = self.ticker;
 
         loop {
+            println!("\n------------------------\n");
             if self.jobs.is_empty() { break; }
 
             println!("Current Tick: {}, Jobs in Queue: {:?}\n", current_tick, self.jobs);
@@ -42,7 +43,6 @@ impl Scheduler {
                 }
             }
             println!("Current tick: {}", current_tick);
-            println!("\n------------------------\n")
 
         }
 
